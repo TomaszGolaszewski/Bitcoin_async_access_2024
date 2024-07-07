@@ -1,10 +1,11 @@
 # by Tomasz Golaszewski
 # 2024.06.30
-# Test program to check the possibility of asynchronously downloading Bitcoin data using the WebSocket protocol.
+# Test program to check the possibility of asynchronously downloading Bitcoin data
+# using the WebSocket protocol.
 
 import asyncio
-import websockets
 import json
+import websockets
 
 # sandbox:
 # URI = "wss://ws-feed-public.sandbox.exchange.coinbase.com"
@@ -12,6 +13,10 @@ import json
 URI = "wss://ws-feed.exchange.coinbase.com"
 
 async def websocket_listener(product_ids: list[str]):
+    """The method takes as parameters a list of products to subscribe to. 
+    Then it establishes a connection using a websocket and listens for received messages. 
+    Finally, it displays the current price of the subscribed products on the screen.
+    """
     subscribe_message = json.dumps({
         "type": "subscribe",
         "channels": [
@@ -38,6 +43,9 @@ async def websocket_listener(product_ids: list[str]):
 
 
 async def websocket_unsubscribe(product_ids: list[str]):
+    """The method takes as parameters a list of products to unsubscribe from.
+    """
+
     subscribe_message = json.dumps({
         "type": "unsubscribe",
         "channels": [
@@ -57,11 +65,11 @@ async def websocket_unsubscribe(product_ids: list[str]):
 
 
 if __name__ == '__main__':
-    product_ids = ["BTC-USD"]
+    product_list = ["BTC-USD"]
     try:
-        asyncio.run(websocket_listener(product_ids))
+        asyncio.run(websocket_listener(product_list))
     except KeyboardInterrupt:
         print("Keyboard Interrupt...")
-        asyncio.run(websocket_unsubscribe(product_ids))
+        asyncio.run(websocket_unsubscribe(product_list))
     except:
         print("Something wrong...")
