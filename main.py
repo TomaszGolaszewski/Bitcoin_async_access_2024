@@ -11,12 +11,11 @@ import json
 # production:
 URI = "wss://ws-feed.exchange.coinbase.com"
 
-async def websocket_listener():
+async def websocket_listener(product_ids: list[str]):
     subscribe_message = json.dumps({
         "type": "subscribe",
         "channels": [
-            {"name": "heartbeat", "product_ids": ["BTC-USD"]},
-            {"name": "ticker", "product_ids": ["BTC-USD"]}
+            {"name": "ticker", "product_ids": product_ids}
         ],
     })
 
@@ -29,21 +28,40 @@ async def websocket_listener():
                 response_type = json_response.get("type")
                 if response_type == "ticker":
                     print(json_response.get("time"), ">>>", json_response.get("price") )
-                elif response_type == "heartbeat":
-                    print(json_response.get("time"), "...")
                 else:
                     print(json_response)
 
-    except websockets.exceptions.ConnectionClosedError:
-        print('Connection closed with error, retrying...')
-    except websockets.exceptions.ConnectionClosedOK:
-        print("Connection closed with OK")
+    except websockets.exceptions.ConnectionClosedError as e:
+        print('Connection closed with error: ' + str(e))
+    except websockets.exceptions.ConnectionClosedOK as e:
+        print("Connection closed correctly with message: " + str(e))
+
+
+async def websocket_unsubscribe(product_ids: list[str]):
+    subscribe_message = json.dumps({
+        "type": "unsubscribe",
+        "channels": [
+            {"name": "ticker", "product_ids": product_ids}
+        ],
+    })
+    try:
+        async with websockets.connect(URI, ping_interval=None) as websocket:
+            await websocket.send(subscribe_message)
+            response = await websocket.recv()
+            json_response = json.loads(response)
+            print(json_response)
+    except websockets.exceptions.ConnectionClosedError as e:
+        print('Connection closed during unsubscribing with error: ' + str(e))
+    except websockets.exceptions.ConnectionClosedOK as e:
+        print("Connection closed during unsubscribing correctly with message: " + str(e))
 
 
 if __name__ == '__main__':
+    product_ids = ["BTC-USD"]
     try:
-        asyncio.run(websocket_listener())
+        asyncio.run(websocket_listener(product_ids))
     except KeyboardInterrupt:
         print("Keyboard Interrupt...")
+        asyncio.run(websocket_unsubscribe(product_ids))
     except:
         print("Something wrong...")
